@@ -85,6 +85,8 @@ certs/leaf.pem: | $(GENERATE_TLS_CERT)
 generate_cert: certs/leaf.pem | $(GENERATE_TLS_CERT)
 ```
 
+There is an optional `--ca-key` flag to use an existing CA key instead of generating one.
+
 ## Client Side
 
 Here's how to make requests that validate, using your new TLS certificates.

@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"net"
@@ -24,9 +25,10 @@ var (
 	validFrom = flag.String("start-date", "", "Creation date formatted as Jan 1 15:04:05 2011 (default now)")
 	validFor  = flag.Duration("duration", 365*24*time.Hour, "Duration that certificate is valid for")
 	version   = flag.Bool("version", false, "Print the version string")
+	caKeyPath = flag.String("ca-key", "", "A root ca key that will be used to sign certificates. If omitted, a new root key will be generated.")
 )
 
-const Version = "0.1"
+const Version = "0.1.1"
 
 func main() {
 	flag.Parse()
@@ -56,11 +58,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to generate serial number: %s", err)
 	}
-	rootKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		panic(err)
+
+	var rootKey *ecdsa.PrivateKey
+	if len(*caKeyPath) == 0 {
+		rootKey, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if err != nil {
+			panic(err)
+		}
+		keyToFile("root.key", rootKey)
+	} else {
+		log.Printf("Using %s as the root key\n", *caKeyPath)
+		rootKey = keyFromFile(*caKeyPath)
 	}
-	keyToFile("root.key", rootKey)
 
 	rootTemplate := x509.Certificate{
 		SerialNumber: serialNumber,
@@ -199,6 +208,22 @@ func keyToFile(filename string, key *ecdsa.PrivateKey) {
 	if err := pem.Encode(file, &pem.Block{Type: "EC PRIVATE KEY", Bytes: b}); err != nil {
 		panic(err)
 	}
+}
+
+// keyFromFile reads in a PEM serialiazed key from |filename| and parses it as a ec private key
+func keyFromFile(filename string) *ecdsa.PrivateKey {
+	pemBts, err := ioutil.ReadFile(*caKeyPath)
+	if err != nil {
+		panic(err)
+	}
+
+	block, _ := pem.Decode(pemBts)
+	key, err := x509.ParseECPrivateKey(block.Bytes)
+	if err != nil {
+		panic(err)
+	}
+
+	return key
 }
 
 func certToFile(filename string, derBytes []byte) {
