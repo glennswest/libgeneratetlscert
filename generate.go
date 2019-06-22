@@ -1,5 +1,5 @@
 // generate-tls-cert generates root, leaf, and client TLS certificates.
-package main
+package generate_tls_cert
 
 import (
 	"crypto/ecdsa"
@@ -30,14 +30,10 @@ var (
 
 const Version = "0.1.1"
 
-func main() {
-	flag.Parse()
-	if *version {
-		fmt.Fprintf(os.Stderr, "generate-tls-cert version %s\n", Version)
-		os.Exit(2)
-	}
+func generate_tls_cert(host string,validFrom string,validFor Duration,keypath string) string {
 	if len(*host) == 0 {
 		log.Fatalf("Missing required --host parameter")
+                return("")
 	}
 	var err error
 	var notBefore time.Time
