@@ -1,5 +1,5 @@
 // generate-tls-cert generates root, leaf, and client TLS certificates.
-package generate_tls_cert
+package libgeneratetlscert
 
 import (
 	"crypto/ecdsa"
@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -21,16 +20,20 @@ import (
 )
 
 var (
-	host      = flag.String("host", "", "Comma-separated hostnames and IPs to generate a certificate for")
-	validFrom = flag.String("start-date", "", "Creation date formatted as Jan 1 15:04:05 2011 (default now)")
-	validFor  = flag.Duration("duration", 365*24*time.Hour, "Duration that certificate is valid for")
-	version   = flag.Bool("version", false, "Print the version string")
-	caKeyPath = flag.String("ca-key", "", "A root ca key that will be used to sign certificates. If omitted, a new root key will be generated.")
+	host      *string
+	validFrom *string
+	validFor  *time.Duration
+	caKeyPath *string
 )
 
 const Version = "0.1.1"
 
-func generate_tls_cert(host string,validFrom string,validFor Duration,keypath string) string {
+func Generate_tls_cert(thost string,tvalidFrom string,tvalidFor time.Duration,tkeypath string,dpath string) string {
+        host := &thost
+        validFrom := &tvalidFrom
+        validFor := &tvalidFor
+        caKeyPath := &tkeypath
+
 	if len(*host) == 0 {
 		log.Fatalf("Missing required --host parameter")
                 return("")
@@ -66,6 +69,10 @@ func generate_tls_cert(host string,validFrom string,validFor Duration,keypath st
 		log.Printf("Using %s as the root key\n", *caKeyPath)
 		rootKey = keyFromFile(*caKeyPath)
 	}
+
+        current_dir, _ := os.Getwd()
+        os.MkdirAll(dpath,0777)
+        os.Chdir(dpath)
 
 	rootTemplate := x509.Certificate{
 		SerialNumber: serialNumber,
@@ -153,9 +160,10 @@ func generate_tls_cert(host string,validFrom string,validFor Duration,keypath st
 	}
 	debugCertToFile("client.debug.crt", derBytes)
 	certToFile("client.pem", derBytes)
+        os.Chdir(current_dir)
 
-	fmt.Fprintf(os.Stdout, `Successfully generated certificates! Here's what you generated.
-
+        return("success")
+/*
 # Root CA
 
 root.key
@@ -185,7 +193,7 @@ client.key: Secret key for TLS client authentication
 client.pem: Public key for TLS client authentication
 
 See https://github.com/Shyp/generate-tls-cert for examples of how to use in code.
-`)
+*/
 }
 
 // keyToFile writes a PEM serialization of |key| to a new file called
