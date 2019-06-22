@@ -108,8 +108,8 @@ func Generate_tls_cert(thost string,tvalidFrom string,tvalidFor time.Duration,tk
 	leafTemplate := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{"Acme Co"},
-			CommonName:   "test_cert_1",
+			Organization: []string{"Redhat Internal"},
+			CommonName:   "RedHatAutoGen",
 		},
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
